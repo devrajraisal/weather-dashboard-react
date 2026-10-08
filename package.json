@@ -1,0 +1,25 @@
+{
+  "name": "weathernow",
+  "private": true,
+  "version": "1.0.0",
+  "description": "React weather dashboard with city search, 5-day forecast, hourly breakdown and weather themes.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "oxlint",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.2",
+    "oxlint": "^1.87.0",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  }
+}

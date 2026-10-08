@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WeatherNow — Live Weather Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0f172a;--surface:rgba(255,255,255,.07);--border:rgba(255,255,255,.1);
+      --text:#f8fafc;--muted:rgba(248,250,252,.6);--accent:#38bdf8;
+      --radius:16px;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;
+      transition:background 1s ease;}
+    body.clear{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);}
+    body.cloudy{background:linear-gradient(135deg,#1e293b 0%,#374151 100%);}
+    body.rain{background:linear-gradient(135deg,#0c1445 0%,#1e3a5f 50%,#0c4a6e 100%);}
+    body.snow{background:linear-gradient(135deg,#1e293b 0%,#334155 50%,#1e3a5f 100%);}
+    body.thunder{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3a 50%,#0f0f2a 100%);}
+
+    .app{max-width:900px;margin:0 auto;padding:2rem 1.5rem;}
+
+    /* SEARCH */
+    .search-section{text-align:center;margin-bottom:2.5rem;}
+    .search-section h1{font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;margin-bottom:.4rem;}
+    .search-section p{color:var(--muted);margin-bottom:1.5rem;font-size:.95rem;}
+    .search-bar{display:flex;gap:.5rem;max-width:480px;margin:0 auto;}
+    .city-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:.7rem 1rem;color:var(--text);font-family:'Outfit',sans-serif;font-size:1rem;
+      outline:none;transition:.2s;backdrop-filter:blur(10px);}
+    .city-input::placeholder{color:var(--muted);}
+    .city-input:focus{border-color:var(--accent);}
+    .search-btn{background:var(--accent);color:#0f172a;border:none;padding:.7rem 1.3rem;
+      border-radius:12px;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:700;
+      font-size:.95rem;transition:.2s;white-space:nowrap;}
+    .search-btn:hover{opacity:.85;}
+    .popular-cities{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem;}
+    .city-chip{background:var(--surface);border:1px solid var(--border);border-radius:50px;
+      padding:.25rem .75rem;font-size:.8rem;cursor:pointer;color:var(--muted);transition:.2s;}
+    .city-chip:hover{color:var(--text);border-color:var(--accent);}
+
+    /* CURRENT WEATHER */
+    .current-card{background:var(--surface);backdrop-filter:blur(20px);border:1px solid var(--border);
+      border-radius:var(--radius);padding:2rem;margin-bottom:1.5rem;
+      display:flex;flex-wrap:wrap;gap:1.5rem;align-items:center;justify-content:space-between;}
+    .current-main{}
+    .city-name{font-size:1.6rem;font-weight:800;margin-bottom:.2rem;}
+    .current-date{color:var(--muted);font-size:.9rem;margin-bottom:1rem;}
+    .weather-icon{font-size:4rem;line-height:1;margin-bottom:.5rem;}
+    .temp-big{font-size:4rem;font-weight:800;line-height:1;display:flex;align-items:flex-start;}
+    .temp-big sup{font-size:1.5rem;margin-top:.5rem;}
+    .condition{color:var(--muted);font-size:1rem;margin-top:.3rem;}
+    .current-details{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
+    .detail-item{background:rgba(255,255,255,.05);border-radius:10px;padding:.8rem;text-align:center;}
+    .detail-label{color:var(--muted);font-size:.75rem;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.5px;}
+    .detail-value{font-size:1.1rem;font-weight:700;}
+
+    /* FORECAST */
+    .section-title{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+    .forecast-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.8rem;margin-bottom:1.5rem;}
+    .forecast-card{background:var(--surface);backdrop-filter:blur(10px);border:1px solid var(--border);
+      border-radius:12px;padding:1rem;text-align:center;transition:.2s;}
+    .forecast-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+    .fc-day{font-size:.8rem;color:var(--muted);margin-bottom:.5rem;font-weight:600;}
+    .fc-icon{font-size:1.8rem;margin:.3rem 0;}
+    .fc-high{font-weight:700;font-size:1rem;}
+    .fc-low{color:var(--muted);font-size:.85rem;}
+
+    /* HOURLY */
+    .hourly-row{display:flex;gap:.8rem;overflow-x:auto;padding-bottom:.5rem;margin-bottom:1.5rem;}
+    .hourly-card{flex:0 0 80px;background:var(--surface);backdrop-filter:blur(10px);
+      border:1px solid var(--border);border-radius:12px;padding:.7rem;text-align:center;}
+    .hc-time{font-size:.75rem;color:var(--muted);margin-bottom:.4rem;}
+    .hc-icon{font-size:1.4rem;margin:.2rem 0;}
+    .hc-temp{font-weight:700;font-size:.9rem;}
+
+    /* AIR QUALITY / UV */
+    .metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem;}
+    .metric-card{background:var(--surface);backdrop-filter:blur(10px);border:1px solid var(--border);
+      border-radius:12px;padding:1.2rem;}
+    .metric-title{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;}
+    .metric-value{font-size:1.6rem;font-weight:800;margin-bottom:.2rem;}
+    .metric-label{font-size:.8rem;color:var(--muted);}
+    .metric-bar{height:6px;background:rgba(255,255,255,.1);border-radius:50px;margin-top:.5rem;}
+    .metric-fill{height:100%;border-radius:50px;}
+
+    /* ERROR / LOADING */
+    .error{text-align:center;padding:2rem;color:#f87171;background:rgba(248,113,113,.1);
+      border:1px solid rgba(248,113,113,.3);border-radius:var(--radius);}
+    .loading{text-align:center;padding:3rem;color:var(--muted);}
+    .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);
+      border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    ::-webkit-scrollbar{height:4px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:50px;}
+
+    @media(max-width:600px){
+      .current-card{flex-direction:column;}
+      .current-details{grid-template-columns:repeat(2,1fr);}
+      .forecast-grid{grid-template-columns:repeat(3,1fr);}
+    }
+  </style>
+</head>
+<body class="clear">
+<div class="app">
+  <div class="search-section">
+    <h1>☁️ WeatherNow</h1>
+    <p>Real-time weather for any city in the world</p>
+    <div class="search-bar">
+      <input class="city-input" id="cityInput" type="text" placeholder="Enter city name..."
+        onkeydown="if(event.key==='Enter')searchWeather()"/>
+      <button class="search-btn" onclick="searchWeather()">Search</button>
+    </div>
+    <div class="popular-cities">
+      <span class="city-chip" onclick="loadCity('Karachi')">🇵🇰 Karachi</span>
+      <span class="city-chip" onclick="loadCity('Lahore')">🇵🇰 Lahore</span>
+      <span class="city-chip" onclick="loadCity('London')">🇬🇧 London</span>
+      <span class="city-chip" onclick="loadCity('Tokyo')">🇯🇵 Tokyo</span>
+      <span class="city-chip" onclick="loadCity('New York')">🇺🇸 New York</span>
+      <span class="city-chip" onclick="loadCity('Dubai')">🇦🇪 Dubai</span>
+    </div>
+  </div>
+  <div id="weatherOutput"></div>
+</div>
+
+<script>
+// NOTE: Replace with your OpenWeatherMap API key from https://openweathermap.org/api
+// Free tier gives 1000 calls/day. Get key at: https://home.openweathermap.org/users/sign_up
+const API_KEY = 'YOUR_API_KEY_HERE';
+const BASE = 'https://api.openweathermap.org/data/2.5';
+
+const weatherIcons = {
+  'Clear': ['☀️','🌙'],
+  'Clouds': ['⛅','🌥️'],
+  'Rain': ['🌧️','🌧️'],
+  'Drizzle': ['🌦️','🌦️'],
+  'Thunderstorm': ['⛈️','⛈️'],
+  'Snow': ['❄️','🌨️'],
+  'Mist': ['🌫️','🌫️'],
+  'Fog': ['🌫️','🌫️'],
+  'Haze': ['🌫️','🌫️'],
+  'Smoke': ['🌫️','🌫️'],
+  'Dust': ['💨','💨'],
+  'Tornado': ['🌪️','🌪️'],
+};
+
+const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function getIcon(main, isDay=true) {
+  return (weatherIcons[main] || ['🌡️','🌡️'])[isDay?0:1];
+}
+
+function getBodyClass(main) {
+  const map = {Clear:'clear',Clouds:'cloudy',Rain:'rain',Drizzle:'rain',Snow:'snow',Thunderstorm:'thunder'};
+  return map[main]||'clear';
+}
+
+function setTheme(main) {
+  document.body.className = getBodyClass(main);
+}
+
+function formatDate(ts, tz=0) {
+  const d = new Date((ts + tz) * 1000);
+  return `${days[d.getUTCDay()]}, ${d.getUTCDate()} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+function formatHour(ts, tz=0) {
+  const d = new Date((ts + tz) * 1000);
+  const h = d.getUTCHours();
+  return h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h-12}pm`;
+}
+
+function showLoading() {
+  document.getElementById('weatherOutput').innerHTML = `
+    <div class="loading"><div class="spinner"></div><p>Fetching weather data...</p></div>`;
+}
+
+function showError(msg) {
+  document.getElementById('weatherOutput').innerHTML = `<div class="error">❌ ${msg}</div>`;
+}
+
+async function searchWeather() {
+  const city = document.getElementById('cityInput').value.trim();
+  if (!city) return;
+  loadCity(city);
+}
+
+async function loadCity(city) {
+  document.getElementById('cityInput').value = city;
+  showLoading();
+
+  if (API_KEY === 'YOUR_API_KEY_HERE') {
+    // Demo mode with mock data
+    showDemoData(city);
+    return;
+  }
+
+  try {
+    const [currentRes, forecastRes] = await Promise.all([
+      fetch(`${BASE}/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`),
+      fetch(`${BASE}/forecast?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`)
+    ]);
+    if (!currentRes.ok) throw new Error('City not found. Try another name.');
+    const current = await currentRes.json();
+    const forecast = await forecastRes.json();
+    renderWeather(current, forecast);
+  } catch (err) {
+    showError(err.message || 'Failed to fetch weather. Check your API key.');
+  }
+}
+
+function renderWeather(current, forecast) {
+  const tz = current.timezone;
+  const isDay = current.dt > current.sys.sunrise && current.dt < current.sys.sunset;
+  const icon = getIcon(current.weather[0].main, isDay);
+  setTheme(current.weather[0].main);
+
+  // Process 5-day forecast (one per day)
+  const dailyMap = {};
+  forecast.list.forEach(item => {
+    const d = new Date((item.dt + tz) * 1000);
+    const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+    if (!dailyMap[key]) dailyMap[key] = {temps:[], icon: getIcon(item.weather[0].main, true), cond: item.weather[0].main, day: days[d.getUTCDay()]};
+    dailyMap[key].temps.push(item.main.temp);
+  });
+  const daily = Object.values(dailyMap).slice(0,5);
+
+  // Next 8 hourly entries
+  const hourly = forecast.list.slice(0,8);
+
+  document.getElementById('weatherOutput').innerHTML = `
+    <div class="current-card">
+      <div class="current-main">
+        <div class="city-name">📍 ${current.name}, ${current.sys.country}</div>
+        <div class="current-date">${formatDate(current.dt, tz)}</div>
+        <div class="weather-icon">${icon}</div>
+        <div class="temp-big">${Math.round(current.main.temp)}<sup>°C</sup></div>
+        <div class="condition">${current.weather[0].description}</div>
+      </div>
+      <div class="current-details">
+        <div class="detail-item">
+          <div class="detail-label">Feels Like</div>
+          <div class="detail-value">${Math.round(current.main.feels_like)}°</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Humidity</div>
+          <div class="detail-value">${current.main.humidity}%</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Wind</div>
+          <div class="detail-value">${Math.round(current.wind.speed * 3.6)} km/h</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Visibility</div>
+          <div class="detail-value">${(current.visibility/1000).toFixed(1)} km</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">📅 5-Day Forecast</div>
+    <div class="forecast-grid">
+      ${daily.map(d=>`<div class="forecast-card">
+        <div class="fc-day">${d.day}</div>
+        <div class="fc-icon">${d.icon}</div>
+        <div class="fc-high">${Math.round(Math.max(...d.temps))}°</div>
+        <div class="fc-low">${Math.round(Math.min(...d.temps))}°</div>
+      </div>`).join('')}
+    </div>
+
+    <div class="section-title">🕐 Hourly Forecast</div>
+    <div class="hourly-row">
+      ${hourly.map(h=>`<div class="hourly-card">
+        <div class="hc-time">${formatHour(h.dt, tz)}</div>
+        <div class="hc-icon">${getIcon(h.weather[0].main, true)}</div>
+        <div class="hc-temp">${Math.round(h.main.temp)}°</div>
+      </div>`).join('')}
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-title">💨 Wind</div>
+        <div class="metric-value">${Math.round(current.wind.speed * 3.6)}<span style="font-size:1rem"> km/h</span></div>
+        <div class="metric-label">Direction: ${windDir(current.wind.deg)}</div>
+        <div class="metric-bar"><div class="metric-fill" style="width:${Math.min(current.wind.speed*3.6/100*100,100)}%;background:#38bdf8"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">💧 Humidity</div>
+        <div class="metric-value">${current.main.humidity}<span style="font-size:1rem">%</span></div>
+        <div class="metric-label">${current.main.humidity < 40 ? 'Dry' : current.main.humidity < 70 ? 'Comfortable' : 'Humid'}</div>
+        <div class="metric-bar"><div class="metric-fill" style="width:${current.main.humidity}%;background:#818cf8"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">🌡️ Pressure</div>
+        <div class="metric-value">${current.main.pressure}<span style="font-size:1rem"> hPa</span></div>
+        <div class="metric-label">${current.main.pressure < 1000 ? 'Low pressure' : 'Normal'}</div>
+        <div class="metric-bar"><div class="metric-fill" style="width:${Math.min((current.main.pressure/1050)*100,100)}%;background:#fb923c"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">🌅 Sunrise / Sunset</div>
+        <div class="metric-value" style="font-size:1.1rem">
+          ${formatHour(current.sys.sunrise, tz)} / ${formatHour(current.sys.sunset, tz)}
+        </div>
+        <div class="metric-label">Local time</div>
+      </div>
+    </div>`;
+}
+
+function windDir(deg) {
+  const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+  return dirs[Math.round(deg/45) % 8];
+}
+
+// DEMO MODE (when no API key)
+function showDemoData(city) {
+  const demoWeather = {
+    'Karachi': {temp:33,feels:37,humidity:72,wind:18,vis:8,pressure:1008,cond:'Clear',desc:'clear sky',country:'PK',sunrise:5,sunset:19,windDeg:200},
+    'London': {temp:14,feels:12,humidity:80,wind:25,vis:10,pressure:1012,cond:'Clouds',desc:'overcast clouds',country:'GB',sunrise:5,sunset:20,windDeg:270},
+    'Tokyo': {temp:22,feels:21,humidity:65,wind:12,vis:10,pressure:1018,cond:'Clear',desc:'clear sky',country:'JP',sunrise:5,sunset:19,windDeg:90},
+    'Dubai': {temp:38,feels:42,humidity:50,wind:15,vis:9,pressure:1005,cond:'Clear',desc:'sunny',country:'AE',sunrise:5,sunset:19,windDeg:180},
+  };
+  const d = demoWeather[city] || {temp:24,feels:23,humidity:60,wind:14,vis:10,pressure:1013,cond:'Clear',desc:'clear sky',country:'--',sunrise:5,sunset:19,windDeg:90};
+  setTheme(d.cond);
+  const icon = getIcon(d.cond, true);
+  const now = new Date();
+  const dayName = days[now.getDay()];
+
+  document.getElementById('weatherOutput').innerHTML = `
+    <div style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#7dd3fc;">
+      ℹ️ <strong>Demo Mode</strong> — Add your OpenWeatherMap API key in the source code to fetch real live data. <a href="https://openweathermap.org/api" target="_blank" style="color:var(--accent)">Get free key →</a>
+    </div>
+    <div class="current-card">
+      <div class="current-main">
+        <div class="city-name">📍 ${city}, ${d.country}</div>
+        <div class="current-date">${dayName}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}</div>
+        <div class="weather-icon">${icon}</div>
+        <div class="temp-big">${d.temp}<sup>°C</sup></div>
+        <div class="condition">${d.desc}</div>
+      </div>
+      <div class="current-details">
+        <div class="detail-item"><div class="detail-label">Feels Like</div><div class="detail-value">${d.feels}°</div></div>
+        <div class="detail-item"><div class="detail-label">Humidity</div><div class="detail-value">${d.humidity}%</div></div>
+        <div class="detail-item"><div class="detail-label">Wind</div><div class="detail-value">${d.wind} km/h</div></div>
+        <div class="detail-item"><div class="detail-label">Visibility</div><div class="detail-value">${d.vis} km</div></div>
+      </div>
+    </div>
+    <div class="section-title">📅 5-Day Forecast (Demo)</div>
+    <div class="forecast-grid">
+      ${[0,1,2,3,4].map(i=>{
+        const fd=new Date(now);fd.setDate(fd.getDate()+i);
+        const variation=(Math.random()*6-3)|0;
+        return`<div class="forecast-card">
+          <div class="fc-day">${days[fd.getDay()].slice(0,3)}</div>
+          <div class="fc-icon">${icon}</div>
+          <div class="fc-high">${d.temp+variation+2}°</div>
+          <div class="fc-low">${d.temp+variation-4}°</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-title">💨 Wind</div>
+        <div class="metric-value">${d.wind}<span style="font-size:1rem"> km/h</span></div>
+        <div class="metric-label">Direction: ${windDir(d.windDeg)}</div>
+        <div class="metric-bar"><div class="metric-fill" style="width:${Math.min(d.wind,100)}%;background:#38bdf8"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">💧 Humidity</div>
+        <div class="metric-value">${d.humidity}<span style="font-size:1rem">%</span></div>
+        <div class="metric-label">${d.humidity<40?'Dry':d.humidity<70?'Comfortable':'Humid'}</div>
+        <div class="metric-bar"><div class="metric-fill" style="width:${d.humidity}%;background:#818cf8"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">🌡️ Pressure</div>
+        <div class="metric-value">${d.pressure}<span style="font-size:1rem"> hPa</span></div>
+        <div class="metric-label">${d.pressure<1000?'Low pressure':'Normal'}</div>
+        <div class="metric-bar"><div class="metric-fill" style="width:${Math.min((d.pressure/1050)*100,100)}%;background:#fb923c"></div></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">🌅 Sunrise / Sunset</div>
+        <div class="metric-value" style="font-size:1.1rem">6:00am / 7:30pm</div>
+        <div class="metric-label">Local time</div>
+      </div>
+    </div>`;
+}
+
+// Load default city on start
+loadCity('Karachi');
+</script>
+</body>
+</html>
