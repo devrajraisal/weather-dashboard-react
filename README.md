@@ -1,5 +1,7 @@
 # WeatherNow
 
+**Live demo:** https://devrajraisal.github.io/weather-dashboard-react/
+
 A weather dashboard built with React and Vite. Search any city, see current conditions, a 5-day forecast, an hourly breakdown, and a page theme that changes with the weather.
 
 The app works in two modes. With an OpenWeatherMap API key it shows live data. Without a key it runs in demo mode with sample data for a few cities, so anyone can clone it and see it working straight away.
